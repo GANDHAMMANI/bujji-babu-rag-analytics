@@ -215,6 +215,4 @@ When Ollama is running and a compatible model is pulled (`ollama pull llama3`), 
 
 ---
 
-## License
 
-MIT
