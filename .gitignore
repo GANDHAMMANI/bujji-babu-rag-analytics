@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Environment / secrets
+.env
+.env.*
+*.env
+
+# Database (contains user data)
+bujji.db
+*.db
+*.sqlite
+*.sqlite3
+
+# ChromaDB (large vector store — regenerated on upload)
+chroma_db/
+
+# Uploaded files (user data)
+uploads/
+csv_uploads/
+extracted/
+
+# Exported files
+exports/
+
+# Trained models (large binary files)
+models/
+*.pkl
+*.joblib
+
+# Logs
+*.log
+
+# Archives
+*.zip
+*.tar.gz
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temp files from subprocess execution
+tmp*.py
+tmp*.csv
+
+.groq_keys.txt
+rag/
+.claude/
+app_ideas.csv
+rag.zip

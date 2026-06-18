@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bujji Babu — Document Intelligence</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { display: ['Cormorant Garamond', 'Georgia', 'serif'], body: ['DM Sans', 'sans-serif'], mono: ['DM Mono', 'monospace'] },
+          colors: { ink: '#1a1a1a', muted: '#6b6b6b', faint: '#a8a8a8', rule: '#e2e0db', soft: '#f0ede8', cream: '#faf9f7', accent: '#2c5f8a', 'accent-lt': '#e8f0f7', gold: '#b8953a' },
+          boxShadow: { card: '0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04)', lift: '0 4px 16px rgba(0,0,0,0.08)', deep: '0 12px 40px rgba(0,0,0,0.10),0 4px 12px rgba(0,0,0,0.05)' },
+          animation: { 'fade-up': 'fadeUp 0.4s ease both', 'fade-in': 'fadeIn 0.3s ease both', 'spin-slow': 'spin 1.4s linear infinite' },
+          keyframes: { fadeUp: { from: { opacity: '0', transform: 'translateY(12px)' }, to: { opacity: '1', transform: 'translateY(0)' } }, fadeIn: { from: { opacity: '0' }, to: { opacity: '1' } } },
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #faf9f7;
+      color: #1a1a1a
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f0ede8
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #d0cdc8;
+      border-radius: 9px
+    }
+
+    .prose-answer p {
+      margin-bottom: .6em
+    }
+
+    .prose-answer ul {
+      list-style: disc;
+      padding-left: 1.4em;
+      margin-bottom: .6em
+    }
+
+    .prose-answer ol {
+      list-style: decimal;
+      padding-left: 1.4em;
+      margin-bottom: .6em
+    }
+
+    .prose-answer code {
+      font-family: 'DM Mono', monospace;
+      font-size: .82em;
+      background: #f0ede8;
+      padding: 1px 5px;
+      border-radius: 3px
+    }
+
+    .prose-answer strong {
+      font-weight: 600
+    }
+
+    /* ── Inline tables inside LLM answers ──────────────────────────────────── */
+    .prose-answer .md-table-wrap {
+      overflow-x: auto;
+      margin: .75em 0;
+      border-radius: 8px;
+      border: 1px solid #e2e0db;
+    }
+
+    .prose-answer table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: .82rem;
+    }
+
+    .prose-answer th {
+      background: #f0ede8;
+      font-weight: 600;
+      padding: 7px 12px;
+      text-align: left;
+      border-bottom: 2px solid #d8d4ce;
+      white-space: nowrap;
+    }
+
+    .prose-answer td {
+      padding: 6px 12px;
+      text-align: left;
+      border-bottom: 1px solid #ece9e4;
+    }
+
+    .prose-answer tr:last-child td {
+      border-bottom: none;
+    }
+
+    .prose-answer tr:hover td {
+      background: #faf9f7;
+    }
+
+    /* ── Code blocks inside LLM answers ────────────────────────────────────── */
+    .prose-answer pre {
+      background: #1e1e2e;
+      border-radius: 8px;
+      padding: 4px 0 14px;
+      overflow-x: auto;
+      margin: .75em 0;
+      font-size: .8rem;
+      line-height: 1.55;
+    }
+
+    .prose-answer pre code {
+      display: block;
+      background: none;
+      padding: 0 16px;
+      color: #cdd6f4;
+      font-size: inherit;
+      border-radius: 0;
+    }
+
+    .code-lang-label {
+      padding: 4px 12px 6px;
+      font-size: .68rem;
+      color: #a6adc8;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: .05em;
+      text-transform: lowercase;
+      border-bottom: 1px solid #313244;
+      margin-bottom: 8px;
+    }
+
+    /* ── Blockquotes ─────────────────────────────────────────────────────────── */
+    .prose-answer blockquote {
+      border-left: 3px solid #2c5f8a;
+      margin: .5em 0;
+      padding: .3em .8em;
+      color: #555;
+      background: #f0ede8;
+      border-radius: 0 6px 6px 0;
+    }
+
+    /* ── Headings ────────────────────────────────────────────────────────────── */
+    .prose-answer h1,
+    .prose-answer h2,
+    .prose-answer h3 {
+      font-weight: 600;
+      margin: .8em 0 .3em;
+      line-height: 1.3;
+    }
+
+    .prose-answer h1 {
+      font-size: 1.1em;
+    }
+
+    .prose-answer h2 {
+      font-size: 1.0em;
+    }
+
+    .prose-answer h3 {
+      font-size: .95em;
+      color: #444;
+    }
+
+    .drop-active {
+      border-color: #2c5f8a !important;
+      background: #e8f0f7 !important
+    }
+
+    .login-bg {
+      background-color: #fff;
+      background-image: radial-gradient(#e2e0db 1px, transparent 1px);
+      background-size: 28px 28px
+    }
+
+    .md-table table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: .82rem
+    }
+
+    .md-table th,
+    .md-table td {
+      border: 1px solid #e2e0db;
+      padding: 6px 10px;
+      text-align: left
+    }
+
+    .md-table th {
+      background: #f0ede8;
+      font-weight: 500
+    }
+
+    .md-table tr:hover td {
+      background: #faf9f7
+    }
+
+    .tab-btn {
+      transition: color .15s, background .15s, border-color .15s
+    }
+
+    .faithfulness-bad {
+      background: rgba(251, 191, 36, 0.2);
+      border-bottom: 1.5px solid #f59e0b;
+      cursor: help
+    }
+
+    .faithfulness-warn {
+      background: rgba(251, 191, 36, 0.08);
+      border-bottom: 1px dashed #fbbf24;
+      cursor: help
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      height: 3px;
+      background: #e2e0db;
+      border-radius: 9px;
+      overflow: hidden
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #2c5f8a;
+      border-radius: 9px;
+      transition: width .4s ease
+    }
+
+    /* ── Thinking timeline ───────────────────────────────────────────────────── */
+    @keyframes dot-pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.5);
+        opacity: 0.6;
+      }
+    }
+
+    @keyframes step-in {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .think-step {
+      animation: step-in 0.22s ease forwards;
+    }
+
+    @keyframes cur-blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0
+      }
+    }
+
+    .stream-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 0.85em;
+      background: #b08a28;
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      border-radius: 1px;
+      animation: cur-blink 0.65s step-end infinite;
+    }
+
+    /* ── Feedback buttons ────────────────────────────────────────────────────── */
+    .fb-btn {
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 3px 7px;
+      cursor: pointer;
+      font-size: .72rem;
+      background: none;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+
+    .fb-btn:hover {
+      border-color: #e2e0db;
+    }
+
+    .fb-btn.up:hover {
+      background: #f0fdf4;
+      color: #16a34a;
+      border-color: #86efac;
+    }
+
+    .fb-btn.down:hover {
+      background: #fff5f5;
+      color: #dc2626;
+      border-color: #fca5a5;
+    }
+
+    .fb-btn.active-up {
+      background: #f0fdf4;
+      color: #16a34a;
+      border-color: #86efac;
+    }
+
+    .fb-btn.active-down {
+      background: #fff5f5;
+      color: #dc2626;
+      border-color: #fca5a5;
+    }
+
+    /* ── Latency badge ───────────────────────────────────────────────────────── */
+    .latency-badge {
+      font-size: .7rem;
+      font-family: 'DM Mono', monospace;
+      color: #b0aca6;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      user-select: none;
+    }
+
+    .latency-badge svg {
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen">
+
+  <!-- ═══════════════ LOGIN ═══════════════════════════════════════════════════ -->
+  <div id="login-screen" class="login-bg min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white border border-rule rounded-xl w-full max-w-sm shadow-deep animate-fade-up"
+      style="padding:52px 44px 44px">
+      <div class="text-center mb-8">
+        <h1 class="font-display text-5xl font-semibold tracking-wide text-ink leading-none">Bujji <span
+            class="text-gold">Babu</span></h1>
+        <p class="text-xs tracking-widest uppercase text-faint mt-2 font-light">A Dual-Mode Conversational AI System for
+          Document Intelligence and Tabular Data Analysis</p>
+        <div class="w-10 h-px bg-rule mx-auto mt-4"></div>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs tracking-widest uppercase text-muted mb-1.5 font-medium">Username</label>
+          <input id="login-user" type="text" placeholder="Enter username"
+            class="w-full px-3.5 py-2.5 border border-rule rounded-md text-sm bg-cream focus:outline-none focus:border-accent focus:bg-white transition-colors"
+            onkeydown="if(event.key==='Enter')doLogin()" />
+        </div>
+        <div>
+          <label class="block text-xs tracking-widest uppercase text-muted mb-1.5 font-medium">Password</label>
+          <input id="login-pass" type="password" placeholder="Enter password"
+            class="w-full px-3.5 py-2.5 border border-rule rounded-md text-sm bg-cream focus:outline-none focus:border-accent focus:bg-white transition-colors"
+            onkeydown="if(event.key==='Enter')doLogin()" />
+        </div>
+        <p id="login-err" class="text-xs text-red-500 hidden"></p>
+        <button onclick="doLogin()"
+          class="w-full py-2.5 bg-accent text-white text-sm font-medium rounded-md tracking-wide hover:bg-blue-800 active:scale-95 transition-all mt-1">Sign
+          In</button>
+      </div>
+      <p class="text-center text-xs text-faint mt-7">Bujji Babu </p>
+    </div>
+  </div>
+
+  <!-- ═══════════════ APP ══════════════════════════════════════════════════════ -->
+  <div id="app-screen" class="hidden flex flex-col" style="height:100vh; overflow:hidden">
+
+    <!-- Nav -->
+    <header class="bg-white border-b border-rule flex-shrink-0 z-30 shadow-card">
+      <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="font-display text-2xl font-semibold tracking-wide text-ink leading-none">Bujji <span
+              class="text-gold">Babu</span></span>
+          <span class="hidden sm:block text-rule">·</span>
+          <span class="hidden sm:block text-xs tracking-widest uppercase text-faint font-light">v3 · Intelligence
+            Suite</span>
+        </div>
+        <nav class="flex gap-1 bg-cream rounded-full p-1 border border-rule">
+          <button id="tab-pdf" onclick="switchTab('pdf')"
+            class="tab-btn px-5 py-1.5 text-sm font-medium rounded-full">📄 PDF</button>
+          <button id="tab-csv" onclick="switchTab('csv')"
+            class="tab-btn px-5 py-1.5 text-sm font-medium rounded-full">📊 CSV</button>
+        </nav>
+        <div class="flex items-center gap-2">
+          <button id="mode-btn" onclick="toggleMode()"
+            class="hidden px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
+            title="Click to switch Online/Offline">🌐 Online</button>
+          <button onclick="doLogout()"
+            class="text-xs text-muted hover:text-ink border border-rule rounded-full px-3.5 py-1.5 transition-colors">Sign
+            out</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ══════════ PDF PANE ═════════════════════════════════════════════════════ -->
+    <div id="pane-pdf" class="flex-1 flex max-w-6xl mx-auto w-full gap-5 p-5" style="min-height:0; overflow:hidden">
+
+      <!-- Sidebar -->
+      <aside class="flex-shrink-0 flex flex-col gap-4" style="width:272px">
+
+        <!-- Upload -->
+        <div class="bg-white border border-rule rounded-xl shadow-card p-4">
+          <p class="text-xs tracking-widest uppercase text-faint mb-3 font-medium">Upload PDF</p>
+          <div id="pdf-drop" onclick="document.getElementById('pdf-file').click()"
+            class="border-2 border-dashed border-rule rounded-lg p-5 text-center cursor-pointer hover:border-accent hover:bg-accent-lt transition-all select-none">
+            <div class="text-2xl mb-1">📄</div>
+            <p class="text-xs text-muted">Drop PDF or click · max 50 MB</p>
+          </div>
+          <input id="pdf-file" type="file" accept=".pdf" class="hidden" onchange="uploadPDF(this.files[0])" />
+          <!-- Progress bar -->
+          <div id="pdf-progress-wrap" class="hidden mt-3">
+            <div class="progress-bar">
+              <div id="pdf-progress-fill" class="progress-fill" style="width:0%"></div>
+            </div>
+            <p id="pdf-progress-msg" class="text-xs text-accent mt-1.5"></p>
+          </div>
+          <div id="pdf-upload-status" class="hidden mt-3 text-xs leading-relaxed"></div>
+        </div>
+
+        <!-- PDF list -->
+        <div class="bg-white border border-rule rounded-xl shadow-card p-4 flex-1 min-h-0 flex flex-col">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs tracking-widest uppercase text-faint font-medium">Your Documents</p>
+            <div class="flex gap-2">
+              <button onclick="loadPdfList()" class="text-xs text-faint hover:text-accent transition-colors"
+                title="Refresh">↺</button>
+              <button onclick="clearAllPDFs()" class="text-xs text-faint hover:text-red-500 transition-colors"
+                title="Delete all">✕ all</button>
+            </div>
+          </div>
+          <div id="pdf-list" class="flex-1 overflow-y-auto space-y-1.5 pr-1">
+            <p class="text-xs text-faint italic">Loading…</p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Chat -->
+      <div class="flex-1 flex flex-col min-w-0" style="min-height:0; overflow:hidden">
+
+        <!-- Active banner -->
+        <div id="pdf-banner"
+          class="hidden bg-accent-lt border border-blue-200 rounded-xl px-4 py-2.5 mb-3 flex items-center justify-between">
+          <div class="min-w-0">
+            <span class="text-xs tracking-widest uppercase text-accent font-medium">Active Document</span>
+            <p id="pdf-banner-name" class="text-sm font-medium text-ink mt-0.5 truncate"></p>
+          </div>
+          <div class="flex items-center gap-3 flex-shrink-0 ml-4">
+            <div id="pdf-banner-stats" class="flex gap-3 text-xs text-muted"></div>
+            <button onclick="clearPDFConversation()" title="Clear conversation memory"
+              class="text-xs text-faint hover:text-red-500 border border-rule rounded-full px-2.5 py-1 transition-colors">
+              🗑 Clear memory
+            </button>
+          </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="pdf-chat" class="flex-1 overflow-y-auto space-y-4 pb-4 pr-1" style="min-height:0">
+          <div id="pdf-empty" class="flex items-center justify-center h-full">
+            <div class="text-center text-faint">
+              <div class="font-display text-5xl text-rule mb-3">✦</div>
+              <p class="text-sm">Upload a PDF to begin your inquiry</p>
+              <p class="text-xs mt-1 text-faint">Previously uploaded PDFs load instantly from cache</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input -->
+        <div
+          class="bg-white border border-rule rounded-xl shadow-card mt-auto flex items-center gap-2 px-3 py-2 flex-shrink-0">
+          <textarea id="pdf-input" rows="1" placeholder="Ask a question — follow-up questions remember context…"
+            class="flex-1 resize-none text-sm text-ink bg-transparent outline-none leading-snug"
+            style="max-height:96px;font-family:'DM Sans',sans-serif"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendPDFQuery()}"
+            oninput="autoResize(this)"></textarea>
+          <button onclick="sendPDFQuery()" id="pdf-send-btn"
+            class="px-4 py-2 bg-accent text-white text-sm rounded-lg font-medium hover:bg-blue-800 transition-colors flex-shrink-0">Ask</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ CSV PANE ═════════════════════════════════════════════════════ -->
+    <div id="pane-csv" class="hidden flex-1 flex max-w-6xl mx-auto w-full gap-5 p-5"
+      style="min-height:0; overflow:hidden">
+
+      <!-- Sidebar -->
+      <aside class="flex-shrink-0 flex flex-col gap-4" style="width:272px">
+
+        <!-- Save preferences (shown after upload) -->
+        <div id="csv-prefs-card" class="hidden bg-white border border-rule rounded-xl shadow-card p-4">
+          <p class="text-xs tracking-widest uppercase text-faint mb-3 font-medium">Save Preferences</p>
+          <div class="space-y-2.5">
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-xs text-muted">Save chart history</span>
+              <input type="checkbox" id="pref-charts" checked onchange="updatePrefs()"
+                class="w-3.5 h-3.5 accent-[#2c5f8a]" />
+            </label>
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-xs text-muted">Save trained models</span>
+              <input type="checkbox" id="pref-models" checked onchange="updatePrefs()"
+                class="w-3.5 h-3.5 accent-[#2c5f8a]" />
+            </label>
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-xs text-muted">Save query history</span>
+              <input type="checkbox" id="pref-history" checked onchange="updatePrefs()"
+                class="w-3.5 h-3.5 accent-[#2c5f8a]" />
+            </label>
+          </div>
+          <p class="text-xs text-faint mt-2.5 leading-relaxed">History helps the agent understand follow-up questions
+            better.</p>
+        </div>
+
+        <!-- Dataset info (shown after upload) -->
+        <div id="csv-info-card" class="hidden bg-white border border-rule rounded-xl shadow-card p-4">
+          <p class="text-xs tracking-widest uppercase text-faint mb-3 font-medium">Dataset</p>
+          <div id="csv-info-content" class="text-xs space-y-1.5 text-muted"></div>
+        </div>
+      </aside>
+
+      <!-- Chat column -->
+      <div class="flex-1 flex flex-col min-w-0" style="min-height:0; overflow:hidden">
+
+        <!-- Messages -->
+        <div id="csv-chat" class="flex-1 overflow-y-auto space-y-4 pb-3 pr-1" style="min-height:0">
+          <div id="csv-empty" class="flex items-center justify-center h-full">
+            <div class="text-center text-faint">
+              <div class="font-display text-5xl text-rule mb-3">✦</div>
+              <p class="text-sm">Upload a CSV to start analyzing</p>
+              <p class="text-xs mt-1 text-faint">Click the + button in the input bar below</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- File chip — shown after upload, sits just above input -->
+        <div id="csv-file-chip" class="hidden items-center gap-2 mt-2 px-1">
+          <div class="flex items-center gap-2 bg-accent-lt border border-blue-200 rounded-lg px-3 py-1.5 max-w-xs">
+            <span class="text-sm">📊</span>
+            <span id="csv-chip-name" class="text-xs font-medium text-accent truncate max-w-[160px]"></span>
+            <span id="csv-chip-meta" class="text-xs text-faint flex-shrink-0"></span>
+            <button onclick="clearCSVFile()"
+              class="ml-1 text-faint hover:text-red-500 transition-colors flex-shrink-0 text-xs leading-none">✕</button>
+          </div>
+        </div>
+
+        <!-- Input bar -->
+        <div
+          class="bg-white border border-rule rounded-xl shadow-card mt-2 flex items-center gap-2 px-3 py-2 flex-shrink-0">
+
+          <!-- Hidden file input -->
+          <input id="csv-file" type="file" accept=".csv" class="hidden" onchange="uploadCSV(this.files[0])" />
+
+          <!-- + Upload button -->
+          <button onclick="document.getElementById('csv-file').click()" title="Upload CSV"
+            class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg border border-rule text-muted hover:text-accent hover:border-accent hover:bg-accent-lt transition-all text-lg font-light leading-none">
+            +
+          </button>
+
+          <!-- Textarea -->
+          <textarea id="csv-input" rows="1" placeholder="Upload a CSV or ask about your data…"
+            class="flex-1 resize-none text-sm text-ink bg-transparent outline-none leading-snug"
+            style="max-height:96px;font-family:'DM Sans',sans-serif"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendCSVQuery()}"
+            oninput="autoResize(this)"></textarea>
+
+          <!-- Actions -->
+          <div class="flex gap-1.5 flex-shrink-0">
+            <button type="button" onclick="exportCSVChat()" title="Export chat as PDF"
+              class="w-8 h-8 flex items-center justify-center bg-soft text-muted rounded-lg hover:text-accent transition-colors text-sm">↓</button>
+            <button onclick="sendCSVQuery()" id="csv-send-btn"
+              class="px-4 py-2 bg-accent text-white text-sm rounded-lg font-medium hover:bg-blue-800 transition-colors">Ask</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    // ── Configure marked.js ───────────────────────────────────────────────────────
+    // Use setOptions only — avoid custom renderer which breaks across marked versions
+    // (marked v9+ changed renderer.table signature; post-processing is version-proof)
+    marked.setOptions({ gfm: true, breaks: true });
+
+    // Wrap tables and annotate code blocks AFTER marked.parse so it works with
+    // any marked version (v4 → v12+). Override marked.parse once here so every
+    // call site in the app benefits automatically.
+    (function patchMarkedParse() {
+      const _orig = marked.parse.bind(marked);
+      marked.parse = function (src, opts) {
+        if (!src) return '';
+        let html = _orig(src, opts);
+
+        // 1. Wrap <table> in a scrollable overflow container
+        html = html
+          .replace(/<table>/g, '<div class="md-table-wrap"><table>')
+          .replace(/<\/table>/g, '</table></div>');
+
+        // 2. Add language label to fenced code blocks
+        //    marked outputs: <pre><code class="language-python">...</code></pre>
+        html = html.replace(
+          /<pre><code class="language-([^"]+)">/g,
+          function (_, lang) {
+            return '<pre><div class="code-lang-label">' + lang + '</div><code class="language-' + lang + '">';
+          }
+        );
+
+        return html;
+      };
+    })();
+
+    // ── State ─────────────────────────────────────────────────────────────────────
+    let authToken = localStorage.getItem('bb_token') || null;
+    let activePdfId = null;
+    let activeCsvId = null;
+    let chartCount = 0;
+    let pollTimer = null;
+
+    // ── Boot ──────────────────────────────────────────────────────────────────────
+    (async () => {
+      if (authToken && await verifySession()) { showApp(); return; }
+      authToken = null; localStorage.removeItem('bb_token'); showLogin();
+    })();
+
+    function showLogin() {
+      document.getElementById('login-screen').classList.remove('hidden');
+      document.getElementById('app-screen').classList.add('hidden');
+    }
+    async function showApp() {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app-screen').classList.remove('hidden');
+      loadMode();
+      switchTab('pdf'); loadPdfList();
+    }
+
+    // ── Auth ──────────────────────────────────────────────────────────────────────
+    async function doLogin() {
+      const u = document.getElementById('login-user').value.trim();
+      const p = document.getElementById('login-pass').value;
+      const errEl = document.getElementById('login-err');
+      errEl.classList.add('hidden');
+      if (!u || !p) { errEl.textContent = 'Please enter both fields.'; errEl.classList.remove('hidden'); return; }
+      try {
+        const res = await fetch('/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: u, password: p }) });
+        if (!res.ok) { errEl.textContent = 'Invalid credentials.'; errEl.classList.remove('hidden'); return; }
+        authToken = (await res.json()).token;
+        localStorage.setItem('bb_token', authToken);
+        showApp();
+      } catch { errEl.textContent = 'Connection error.'; errEl.classList.remove('hidden'); }
+    }
+    // ── Mode toggle ──────────────────────────────────────────────────────────────
+    let currentMode = 'online';
+
+    async function loadMode() {
+      try {
+        const res = await apiFetch('/mode');
+        if (!res.ok) return;
+        const data = await res.json();
+        currentMode = data.mode || 'online';
+        updateModeBtn();
+        document.getElementById('mode-btn').classList.remove('hidden');
+      } catch (e) { }
+    }
+
+    function updateModeBtn() {
+      const btn = document.getElementById('mode-btn');
+      if (!btn) return;
+      if (currentMode === 'online') {
+        btn.textContent = '🌐 Online';
+        btn.className = 'px-2.5 py-1 rounded-full text-xs font-medium border transition-all bg-green-50 text-green-700 border-green-200';
+      } else {
+        btn.textContent = '💻 Offline';
+        btn.className = 'px-2.5 py-1 rounded-full text-xs font-medium border transition-all bg-amber-50 text-amber-700 border-amber-200';
+      }
+    }
+
+    async function toggleMode() {
+      const newMode = currentMode === 'online' ? 'offline' : 'online';
+      const btn = document.getElementById('mode-btn');
+      const orig = btn.textContent;
+      btn.textContent = '⏳...';
+      try {
+        const res = await apiFetch('/mode/' + newMode, { method: 'POST' });
+        const data = await res.json();
+        if (data.ok) {
+          currentMode = newMode;
+          updateModeBtn();
+        } else {
+          alert('Switch failed: ' + (data.error || 'Is Ollama running?'));
+          btn.textContent = orig;
+        }
+      } catch (e) {
+        alert('Switch failed: ' + e.message);
+        btn.textContent = orig;
+      }
+    }
+
+    async function doLogout() {
+      await apiFetch('/auth/logout', { method: 'POST' }).catch(() => { });
+      authToken = null; activePdfId = null; activeCsvId = null;
+      localStorage.removeItem('bb_token'); showLogin();
+    }
+    async function verifySession() {
+      try { return (await fetch('/auth/me', { headers: authHdr() })).ok; } catch { return false; }
+    }
+    function authHdr() { return authToken ? { Authorization: `Bearer ${authToken}` } : {}; }
+    async function apiFetch(url, opts = {}) {
+      opts.headers = { ...authHdr(), ...(opts.headers || {}) };
+      if (opts.body && !(opts.body instanceof FormData) && typeof opts.body === 'object') {
+        opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(opts.body);
+      }
+      return fetch(url, opts);
+    }
+
+    // ── Tabs ──────────────────────────────────────────────────────────────────────
+    function switchTab(tab) {
+      ['pdf', 'csv'].forEach(t => {
+        const btn = document.getElementById(`tab-${t}`), pane = document.getElementById(`pane-${t}`);
+        if (t === tab) {
+          btn.classList.add('bg-white', 'text-accent', 'shadow-card');
+          btn.classList.remove('text-muted');
+          pane.classList.remove('hidden');
+          pane.classList.add('flex');
+        } else {
+          btn.classList.remove('bg-white', 'text-accent', 'shadow-card');
+          btn.classList.add('text-muted');
+          pane.classList.add('hidden');
+          pane.classList.remove('flex', 'block');
+        }
+      });
+    }
+
+    // ── Drag-drop ─────────────────────────────────────────────────────────────────
+    // PDF drag-drop only (csv-drop removed — upload is now in input bar)
+    const pdfDrop = document.getElementById('pdf-drop');
+    pdfDrop.addEventListener('dragover', e => { e.preventDefault(); pdfDrop.classList.add('drop-active') });
+    pdfDrop.addEventListener('dragleave', () => pdfDrop.classList.remove('drop-active'));
+    pdfDrop.addEventListener('drop', e => {
+      e.preventDefault(); pdfDrop.classList.remove('drop-active');
+      const f = e.dataTransfer.files[0];
+      if (f && f.name.endsWith('.pdf')) uploadPDF(f);
+    });
+
+    // CSV drag-drop on the whole chat area
+    const csvChat = document.getElementById('csv-chat');
+    csvChat.addEventListener('dragover', e => { e.preventDefault(); csvChat.classList.add('drop-active') });
+    csvChat.addEventListener('dragleave', () => csvChat.classList.remove('drop-active'));
+    csvChat.addEventListener('drop', e => {
+      e.preventDefault(); csvChat.classList.remove('drop-active');
+      const f = e.dataTransfer.files[0];
+      if (f && f.name.endsWith('.csv')) uploadCSV(f);
+    });
+
+    // ── PDF list ──────────────────────────────────────────────────────────────────
+    async function loadPdfList() {
+      try {
+        const { pdfs } = await (await apiFetch('/pdfs')).json();
+        const el = document.getElementById('pdf-list');
+        if (!pdfs.length) { el.innerHTML = '<p class="text-xs text-faint italic">No documents yet.</p>'; return; }
+        el.innerHTML = pdfs.map(p => `
+      <div class="rounded-lg border border-rule hover:border-accent transition-all group overflow-hidden">
+        <button onclick="loadSavedPdf('${p.pdf_id}','${escH(p.filename)}')"
+          class="w-full text-left px-3 py-2.5">
+          <div class="flex items-start justify-between gap-1">
+            <p class="text-xs font-medium text-ink truncate group-hover:text-accent" title="${escH(p.filename)}">${escH(p.filename)}</p>
+            <span class="text-green-600 text-xs flex-shrink-0">✓</span>
+          </div>
+          <p class="text-xs text-faint mt-0.5">${p.stats.text_chunks || 0} chunks · ${p.stats.images_found || 0} imgs · ${p.stats.tables_found || 0} tbls</p>
+        </button>
+        <div class="flex border-t border-rule divide-x divide-rule">
+          <button onclick="loadSavedPdf('${p.pdf_id}','${escH(p.filename)}')"
+            class="flex-1 text-xs text-accent py-1.5 hover:bg-accent-lt transition-colors">
+            Load
+          </button>
+          <button onclick="clearPDFCache('${p.pdf_id}','${escH(p.filename)}')"
+            class="flex-1 text-xs text-muted py-1.5 hover:bg-red-50 hover:text-red-500 transition-colors">
+            Delete
+          </button>
+        </div>
+      </div>`).join('');
+      } catch { }
+    }
+
+    async function loadSavedPdf(pdfId, filename) {
+      // Show loading state immediately
+      activePdfId = pdfId;
+      document.getElementById('pdf-banner').classList.remove('hidden');
+      document.getElementById('pdf-banner-name').textContent = filename;
+      document.getElementById('pdf-banner-stats').innerHTML =
+        `<span class="text-faint">${spinner()} Loading…</span>`;
+      resetChat('pdf-chat', `Loading <strong>${escH(filename)}</strong>…`);
+
+      try {
+        const res = await apiFetch(`/pdfs/load/${pdfId}`, { method: 'POST' });
+        const data = await res.json();
+
+        document.getElementById('pdf-banner-stats').innerHTML =
+          `<span>${data.stats.text_chunks || 0} chunks</span>` +
+          `<span>${data.stats.images_found || 0} imgs</span>` +
+          `<span>${data.stats.tables_found || 0} tbls</span>`;
+
+        resetChat('pdf-chat',
+          `<strong>${escH(data.filename)}</strong> ready. ` +
+          `${data.stats.text_chunks} chunks · ${data.stats.images_found} images. ` +
+          `Ask anything — conversation memory is active.`
+        );
+      } catch (e) {
+        document.getElementById('pdf-banner-stats').innerHTML = `<span class="text-red-400">Load failed</span>`;
+        console.error('loadSavedPdf failed:', e);
+      }
+    }
+
+    function selectPdf(pdfId, filename, stats) {
+      // Legacy — kept for compatibility
+      loadSavedPdf(pdfId, filename);
+    }
+
+    // ── PDF upload with background job polling ────────────────────────────────────
+    async function uploadPDF(file) {
+      const statusEl = document.getElementById('pdf-upload-status');
+      const progressWrap = document.getElementById('pdf-progress-wrap');
+      const progressFill = document.getElementById('pdf-progress-fill');
+      const progressMsg = document.getElementById('pdf-progress-msg');
+
+      statusEl.classList.add('hidden');
+      progressWrap.classList.remove('hidden');
+      progressFill.style.width = '5%';
+      progressMsg.textContent = 'Uploading…';
+
+      const fd = new FormData(); fd.append('file', file);
+      let jobId = null;
+
+      try {
+        const res = await apiFetch('/upload', { method: 'POST', body: fd });
+        const data = await res.json();
+
+        if (!data.success) throw new Error(data.detail || 'Upload failed');
+
+        // Cached → instant return
+        if (data.status === 'done') {
+          progressFill.style.width = '100%';
+          progressMsg.textContent = data.cached ? '✓ Loaded from cache' : '✓ Indexed';
+          setTimeout(() => progressWrap.classList.add('hidden'), 2000);
+          _onPDFReady(data);
+          return;
+        }
+
+        // Background job started → poll
+        jobId = data.job_id;
+        progressFill.style.width = '15%';
+        progressMsg.textContent = 'Processing…';
+
+        _pollJob(jobId, progressFill, progressMsg, progressWrap, file.filename);
+
+      } catch (e) {
+        progressWrap.classList.add('hidden');
+        setStatus(statusEl, 'err', '✕ ' + (e.message || 'Upload failed'));
+      }
+    }
+
+    function _pollJob(jobId, fillEl, msgEl, wrapEl, filename) {
+      const stages = {
+        pending: { pct: 10, msg: 'Queued…' },
+        running: { pct: 40, msg: 'Chunking & embedding…' },
+      };
+      let pct = 15;
+
+      clearInterval(pollTimer);
+      pollTimer = setInterval(async () => {
+        try {
+          const job = await (await apiFetch(`/upload/status/${jobId}`)).json();
+
+          if (job.status === 'done') {
+            clearInterval(pollTimer);
+            fillEl.style.width = '100%';
+            msgEl.textContent = '✓ ' + job.message;
+            setTimeout(() => wrapEl.classList.add('hidden'), 2000);
+            _onPDFReady(job);
+            loadPdfList();
+            return;
+          }
+
+          if (job.status === 'error') {
+            clearInterval(pollTimer);
+            wrapEl.classList.add('hidden');
+            const statusEl = document.getElementById('pdf-upload-status');
+            setStatus(statusEl, 'err', '✕ ' + (job.message || 'Ingestion failed'));
+            return;
+          }
+
+          // Animate progress
+          pct = Math.min(pct + 8, 88);
+          fillEl.style.width = pct + '%';
+          msgEl.textContent = stages[job.status]?.msg || 'Processing…';
+
+        } catch { }
+      }, 1500);
+    }
+
+    function _onPDFReady(data) {
+      activePdfId = data.pdf_id;
+      document.getElementById('pdf-banner').classList.remove('hidden');
+      document.getElementById('pdf-banner-name').textContent = data.filename;
+      document.getElementById('pdf-banner-stats').innerHTML =
+        `<span>${data.stats?.text_chunks || 0} chunks</span><span>${data.stats?.images_found || 0} imgs</span><span>${data.stats?.tables_found || 0} tbls</span>`;
+      const cached = data.cached ? ' <span class="text-green-600 text-xs">● Loaded from cache</span>' : ' <span class="text-accent text-xs">● Freshly indexed</span>';
+      resetChat('pdf-chat', `<strong>${escH(data.filename)}</strong> is ready.${cached} Ask anything — follow-up questions retain context.`);
+    }
+
+    // ── CSV session actions ──────────────────────────────────────────────────────
+    function exportCSVChat() {
+      if (!activeCsvId) {
+        alert('No CSV session active — please upload a file first.');
+        return;
+      }
+      if (!authToken) {
+        alert('Not logged in. Please refresh and log in again.');
+        return;
+      }
+      // Pass the auth token as a query parameter so the browser opens the
+      // download URL directly within the current user-gesture window.
+      // Using fetch + async blob would expire the activation window (~5s) before
+      // the PDF is generated, causing browsers to silently block the download.
+      const btn = document.querySelector('button[onclick="exportCSVChat()"]');
+      const origHtml = btn ? btn.innerHTML : '';
+      if (btn) { btn.innerHTML = '⏳'; btn.disabled = true; }
+
+      const url = `/export-chat/${activeCsvId}?token=${encodeURIComponent(authToken)}`;
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '';          // let Content-Disposition header set the filename
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // Restore button after a short delay (the download is in flight)
+      setTimeout(() => {
+        if (btn) { btn.innerHTML = origHtml; btn.disabled = false; }
+      }, 3000);
+    }
+
+    async function deleteCSVSession() {
+      if (!activeCsvId) return;
+      if (!confirm('Clear this CSV session and chat history?')) return;
+      await apiFetch(`/csv-sessions/${activeCsvId}`, { method: 'DELETE' });
+      activeCsvId = null;
+      document.getElementById('csv-banner').classList.add('hidden');
+      resetChat('csv-chat', 'Session cleared. Upload a new CSV to begin.');
+    }
+
+    // ── PDF conversation clear ────────────────────────────────────────────────────
+    async function clearPDFConversation() {
+      if (!activePdfId) return;
+      if (!confirm('Clear conversation memory for this document?')) return;
+      await apiFetch(`/conversation/${activePdfId}`, { method: 'DELETE' });
+      resetChat('pdf-chat', 'Conversation memory cleared. Starting fresh.');
+    }
+
+    // ── Delete single PDF from cache ──────────────────────────────────────────────
+    async function clearPDFCache(pdfId, filename) {
+      if (!confirm(`Delete "${filename}" from cache?\nThe PDF file stays on disk — you can re-upload to re-index.`)) return;
+      try {
+        const res = await apiFetch(`/pdfs/${pdfId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (activePdfId === pdfId) {
+          activePdfId = null;
+          document.getElementById('pdf-banner').classList.add('hidden');
+          resetChat('pdf-chat', `"${escH(filename)}" has been deleted from cache. Re-upload to use it again.`);
+        }
+        await loadPdfList();
+      } catch (e) {
+        alert('Delete failed: ' + e.message);
+      }
+    }
+
+    // ── Delete all PDFs ───────────────────────────────────────────────────────────
+    async function clearAllPDFs() {
+      if (!confirm('Delete ALL cached documents?\nThis cannot be undone. You will need to re-upload PDFs.')) return;
+      try {
+        const { pdfs } = await (await apiFetch('/pdfs')).json();
+        for (const p of pdfs) {
+          await apiFetch(`/pdfs/${p.pdf_id}`, { method: 'DELETE' });
+        }
+        activePdfId = null;
+        document.getElementById('pdf-banner').classList.add('hidden');
+        document.getElementById('pdf-list').innerHTML = '<p class="text-xs text-faint italic">No documents yet.</p>';
+        resetChat('pdf-chat', 'All documents cleared. Upload a PDF to begin.');
+      } catch (e) {
+        alert('Clear failed: ' + e.message);
+      }
+    }
+
+    // ── PDF query ─────────────────────────────────────────────────────────────────
+    async function sendPDFQuery() {
+      const inp = document.getElementById('pdf-input');
+      const q = inp.value.trim(); if (!q) return;
+      if (!activePdfId) { alert('Please upload or select a PDF first.'); return; }
+      inp.value = ''; inp.style.height = 'auto';
+      addUserBubble('pdf-chat', q);
+      lockBtn('pdf-send-btn');
+      await streamPDFQuery(q);
+      unlockBtn('pdf-send-btn', 'Ask');
+    }
+
+    async function streamPDFQuery(question) {
+      const chat = document.getElementById('pdf-chat');
+      const startTime = performance.now();
+
+      const wrap = document.createElement('div');
+      wrap.className = 'animate-fade-up';
+      const bubble = document.createElement('div');
+      bubble.className = 'bg-white border border-rule rounded-xl shadow-card p-4 max-w-3xl';
+
+      // ── Thinking animation (shown until first token) ──────────────────────────
+      const thinkingEl = makeThinkingEl([
+        'Diving into the document…',
+        'Hunting for relevant passages…',
+        'Reading between the lines…',
+        'Pulling the best matches…',
+        'Ranking what matters most…',
+        'Cross-referencing sources…',
+        'Connecting the pieces…',
+        'Weighing the evidence…',
+        'Composing your answer…',
+        'Almost there…',
+      ]);
+      bubble.appendChild(thinkingEl);
+
+      const answerDiv = document.createElement('div');
+      answerDiv.className = 'prose-answer text-sm text-ink leading-relaxed';
+      bubble.appendChild(answerDiv);
+      wrap.appendChild(bubble);
+      chat.appendChild(wrap);
+      scrollEnd(chat);
+
+      let fullText = '', metaData = null, firstToken = true;
+      try {
+        const res = await fetch('/query-stream', {
+          method: 'POST',
+          headers: { ...authHdr(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pdf_id: activePdfId, question, top_k: 5 }),
+        });
+        if (!res.ok) {
+          thinkingEl.destroy(); thinkingEl.remove();
+          answerDiv.innerHTML = `<span class="text-red-500">Error ${res.status}</span>`;
+          return;
+        }
+        const reader = res.body.getReader(), decoder = new TextDecoder();
+        let buffer = '';
+        while (true) {
+          const { done, value } = await reader.read(); if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n\n'); buffer = lines.pop();
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const payload = line.slice(6).trim();
+            if (payload === '[DONE]') break;
+            try {
+              const chunk = JSON.parse(payload);
+              if (chunk.type === 'meta') { metaData = chunk; }
+              else if (chunk.type === 'token') {
+                if (firstToken) {
+                  firstToken = false;
+                  thinkingEl.destroy(); thinkingEl.remove();
+                }
+                fullText += chunk.text;
+                answerDiv.innerHTML = marked.parse(fullText);
+                const lastEl = answerDiv.lastElementChild || answerDiv;
+                lastEl.insertAdjacentHTML('beforeend', '<span class="stream-cursor"></span>');
+                scrollEnd(chat);
+              }
+            } catch { }
+          }
+        }
+        answerDiv.innerHTML = marked.parse(fullText);
+        const latencyMs = performance.now() - startTime;
+
+        if (metaData) {
+          // Query class badge + latency on same row
+          if (metaData.query_class) {
+            const cc = { FACTOID: 'bg-blue-50 text-blue-700', COMPARATIVE: 'bg-purple-50 text-purple-700', CAUSAL: 'bg-orange-50 text-orange-700', DEFINITIONAL: 'bg-teal-50 text-teal-700', ANALYTICAL: 'bg-indigo-50 text-indigo-700', SUMMARY: 'bg-green-50 text-green-700', PROCEDURAL: 'bg-pink-50 text-pink-700', CONVERSATIONAL: 'bg-gray-50 text-gray-600' };
+            const cls = metaData.query_class, clr = cc[cls] || 'bg-soft text-muted';
+            const conf = metaData.confidence != null ? `<span class="text-xs text-faint">confidence: ${(metaData.confidence * 100).toFixed(0)}%</span>` : '';
+            bubble.insertAdjacentHTML('beforeend',
+              `<div class="mt-2 flex items-center gap-2 flex-wrap">
+                <span class="px-2 py-0.5 text-xs rounded-full font-medium ${clr}">${cls.toLowerCase()}</span>
+                ${conf}
+                <span class="latency-badge ml-auto">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  ${(latencyMs / 1000).toFixed(1)}s
+                </span>
+               </div>`);
+          } else {
+            addLatencyBadge(bubble, latencyMs);
+          }
+          // Sources
+          if (metaData.sources?.length) {
+            bubble.insertAdjacentHTML('beforeend', `<div class="mt-3 flex flex-wrap gap-1.5">${metaData.sources.map(p => `<span class="px-2 py-0.5 bg-soft text-xs text-muted rounded font-mono">p.${p}</span>`).join('')}</div>`);
+          }
+          // Warning
+          if (metaData.warning) {
+            bubble.insertAdjacentHTML('beforeend', `<div class="mt-3 flex items-start gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700"><span>⚠</span><span>${escH(metaData.warning)}</span></div>`);
+          }
+          // Faithfulness
+          if (metaData.faithfulness?.unsupported_count > 0) {
+            const fScore = Math.round((metaData.faithfulness.overall_score || 0) * 100);
+            const fCount = metaData.faithfulness.unsupported_count;
+            const fTotal = metaData.faithfulness.total_sentences || 0;
+            // Use stronger amber styling when more than 30% of sentences are unsupported
+            const fRatio = fTotal > 0 ? fCount / fTotal : 0;
+            const fBg = fRatio >= 0.3 ? 'bg-amber-100 border-amber-400' : 'bg-amber-50 border-amber-200';
+            bubble.insertAdjacentHTML('beforeend',
+              `<div class="mt-2 flex items-center gap-2 px-3 py-2 ${fBg} border rounded-lg text-xs text-amber-800">` +
+              `<span class="text-base leading-none">⚠</span>` +
+              `<span><strong>${fCount}</strong> of ${fTotal} sentence${fTotal !== 1 ? 's' : ''} may not be fully grounded in the document` +
+              ` &mdash; faithfulness score: <strong>${fScore}%</strong></span></div>`);
+          }
+          // Tables
+          metaData.tables?.forEach(t => {
+            if (t.action === 'summarize') bubble.insertAdjacentHTML('beforeend', `<div class="mt-3 p-3 bg-soft rounded text-xs text-muted italic">${escH(t.summary || '')}</div>`);
+            else bubble.insertAdjacentHTML('beforeend', `<div class="mt-3 md-table overflow-x-auto text-xs">${marked.parse(t.markdown || '')}</div>`);
+          });
+          // Images
+          if (metaData.images?.length) {
+            let ih = '<div class="mt-4 flex flex-wrap gap-3">';
+            metaData.images.forEach(img => { ih += `<div class="border border-rule rounded-lg overflow-hidden" style="max-width:200px"><img src="${escH(img.url)}" alt="${escH(img.description)}" class="w-full object-cover" style="max-height:140px"/><p class="text-xs text-muted p-2 leading-snug">${escH(img.description || '')}</p></div>`; });
+            ih += '</div>';
+            bubble.insertAdjacentHTML('beforeend', ih);
+          }
+        } else {
+          addLatencyBadge(bubble, latencyMs);
+        }
+        // Feedback buttons (only for substantive answers)
+        if (fullText.trim().length > 30) {
+          addFeedbackBar(bubble, activePdfId, question, fullText);
+        }
+        scrollEnd(chat);
+      } catch (e) {
+        thinkingEl.destroy?.(); thinkingEl.remove?.();
+        answerDiv.innerHTML = `<span class="text-red-500">Stream error: ${escH(e.message)}</span>`;
+      }
+    }
+
+
+    function renderPDFAnswer(chatId, data) {
+      const chat = document.getElementById(chatId);
+      const wrap = document.createElement('div'); wrap.className = 'animate-fade-up';
+      let html = `<div class="bg-white border border-rule rounded-xl shadow-card p-4 max-w-3xl">`;
+      // Render answer with faithfulness highlights if available
+      // Always render answer with markdown first
+      html += `<div class="prose-answer text-sm text-ink leading-relaxed">${marked.parse(data.answer || '')}</div>`;
+      // Show faithfulness badge only when partially/unfaithful — don't re-render text
+      if (data.faithfulness && data.faithfulness.label && data.faithfulness.label !== 'faithful') {
+        const unsupCount = data.faithfulness.unsupported_count || 0;
+        if (unsupCount > 0) {
+          html += `<div class="mt-2 flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+        <span class="flex-shrink-0">⚠</span>
+        <span>${unsupCount} sentence${unsupCount > 1 ? 's' : ''} may not be fully grounded in this document (faithfulness: ${Math.round((data.faithfulness.overall_score || 0) * 100)}%)</span>
+      </div>`;
+        }
+      }
+      if (data.warning) {
+        html += `<div class="mt-3 flex items-start gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+      <span class="flex-shrink-0 mt-0.5">⚠</span>
+      <span>${escH(data.warning)}</span>
+    </div>`;
+      }
+      // Query class badge
+      if (data.query_class) {
+        const classColors = {
+          FACTOID: 'bg-blue-50 text-blue-700', COMPARATIVE: 'bg-purple-50 text-purple-700',
+          CAUSAL: 'bg-orange-50 text-orange-700', DEFINITIONAL: 'bg-teal-50 text-teal-700',
+          ANALYTICAL: 'bg-indigo-50 text-indigo-700', SUMMARY: 'bg-green-50 text-green-700',
+          PROCEDURAL: 'bg-pink-50 text-pink-700', CONVERSATIONAL: 'bg-gray-50 text-gray-600',
+        };
+        const cls = data.query_class;
+        const clr = classColors[cls] || 'bg-soft text-muted';
+        html += `<div class="mt-2 flex items-center gap-2">
+      <span class="px-2 py-0.5 text-xs rounded-full font-medium ${clr}">${cls.toLowerCase()}</span>
+      ${data.confidence != null ? `<span class="text-xs text-faint">confidence: ${(data.confidence * 100).toFixed(0)}%</span>` : ''}
+    </div>`;
+      }
+      if (data.sources?.length) {
+        html += `<div class="mt-3 flex flex-wrap gap-1.5">`;
+        data.sources.forEach(p => { html += `<span class="px-2 py-0.5 bg-soft text-xs text-muted rounded font-mono">p.${p}</span>`; });
+        html += `</div>`;
+      }
+      data.tables?.forEach(t => {
+        if (t.action === 'summarize') html += `<div class="mt-3 p-3 bg-soft rounded text-xs text-muted italic">${escH(t.summary || '')}</div>`;
+        else html += `<div class="mt-3 md-table overflow-x-auto text-xs">${marked.parse(t.markdown || '')}</div>`;
+      });
+      if (data.images?.length) {
+        html += `<div class="mt-4 flex flex-wrap gap-3">`;
+        data.images.forEach(img => {
+          html += `<div class="border border-rule rounded-lg overflow-hidden" style="max-width:200px">
+        <img src="${escH(img.url)}" alt="${escH(img.description)}" class="w-full object-cover" style="max-height:140px"/>
+        <p class="text-xs text-muted p-2 leading-snug">${escH(img.description || '')}</p>
+      </div>`;
+        });
+        html += `</div>`;
+      }
+      html += `</div>`;
+      wrap.innerHTML = html;
+      // Add feedback bar after rendering (needs live DOM element)
+      if (data.answer && data.answer.length > 30) {
+        const bubbleEl = wrap.querySelector('div');
+        if (bubbleEl) addFeedbackBar(bubbleEl, activePdfId, data._question || '', data.answer);
+      }
+      chat.appendChild(wrap); scrollEnd(chat);
+    }
+
+    // ── CSV upload ────────────────────────────────────────────────────────────────
+    async function uploadCSV(file) {
+      if (!file || !file.name.endsWith('.csv')) {
+        resetChat('csv-chat', '<span class="text-red-500">✕ Please upload a valid .csv file.</span>');
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append('file', file);
+
+      // Show chip immediately with loading state
+      document.getElementById('csv-file-chip').classList.remove('hidden');
+      document.getElementById('csv-file-chip').classList.add('flex');
+      document.getElementById('csv-chip-name').textContent = file.name;
+      document.getElementById('csv-chip-meta').textContent = 'uploading…';
+
+      resetChat('csv-chat', spinner() + ' Reading dataset…');
+
+      try {
+        const res = await fetch('/upload-csv', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.detail || 'Upload failed');
+
+        activeCsvId = data.csv_id;
+
+        // Update chip with stats
+        document.getElementById('csv-chip-meta').textContent = `${data.rows.toLocaleString()} rows × ${data.cols} cols`;
+
+        // Show sidebar cards
+        document.getElementById('csv-info-card').classList.remove('hidden');
+        document.getElementById('csv-prefs-card').classList.remove('hidden');
+
+        const nullCount = Object.keys(data.nulls || {}).length;
+        document.getElementById('csv-info-content').innerHTML = `
+      <div class="flex justify-between"><span>Rows</span><span class="font-mono text-ink font-medium">${data.rows.toLocaleString()}</span></div>
+      <div class="flex justify-between"><span>Columns</span><span class="font-mono text-ink font-medium">${data.cols}</span></div>
+      <div class="flex justify-between"><span>Null cols</span><span class="font-mono ${nullCount > 0 ? 'text-amber-600' : 'text-green-600'} font-medium">${nullCount}</span></div>
+      <div class="mt-2 pt-2 border-t border-rule">
+        <p class="mb-1.5">Columns</p>
+        <div class="space-y-0.5 max-h-48 overflow-y-auto">
+          ${data.columns.map(c => `<div class="flex justify-between gap-2"><span class="font-mono text-ink truncate">${escH(c)}</span><span class="text-faint flex-shrink-0">${escH(data.dtypes[c] || '')}</span></div>`).join('')}
+        </div>
+      </div>`;
+
+        resetChat('csv-chat', `<strong>${escH(file.name)}</strong> — ${data.rows.toLocaleString()} rows × ${data.cols} columns loaded. Ask anything!`);
+
+        // Render suggested starter questions as clickable chips
+        if (data.suggestions && data.suggestions.length) {
+          const csvChat = document.getElementById('csv-chat');
+          const sugWrap = document.createElement('div');
+          sugWrap.id = 'csv-suggestions';
+          sugWrap.className = 'animate-fade-in mt-3';
+          sugWrap.innerHTML = `
+            <p class="text-xs text-faint mb-2 font-medium tracking-wide uppercase">Suggested questions</p>
+            <div class="flex flex-wrap gap-2">
+              ${data.suggestions.map(q => `
+                <button
+                  onclick="csvSuggestionClick(this)"
+                  data-q="${escH(q)}"
+                  class="suggestion-chip text-xs px-3 py-1.5 rounded-full border border-blue-200
+                         bg-accent-lt text-accent hover:bg-accent hover:text-white hover:border-accent
+                         transition-all duration-150 cursor-pointer select-none">
+                  ${escH(q)}
+                </button>`).join('')}
+            </div>`;
+          csvChat.appendChild(sugWrap);
+          const chatEl = document.getElementById('csv-chat');
+          setTimeout(() => { chatEl.scrollTop = chatEl.scrollHeight; }, 80);
+        }
+
+        // Reset file input so same file can be re-uploaded if needed
+        document.getElementById('csv-file').value = '';
+
+      } catch (e) {
+        // Revert chip on error
+        document.getElementById('csv-file-chip').classList.add('hidden');
+        document.getElementById('csv-file-chip').classList.remove('flex');
+        document.getElementById('csv-chip-meta').textContent = '';
+        document.getElementById('csv-chip-name').textContent = '';
+        document.getElementById('csv-file').value = '';
+        resetChat('csv-chat', `<span class="text-red-500">✕ ${escH(e.message || 'Upload failed')}</span>`);
+      }
+    }
+
+
+    function clearCSVFile() {
+      activeCsvId = null;
+      document.getElementById('csv-file-chip').classList.add('hidden');
+      document.getElementById('csv-file-chip').classList.remove('flex');
+      document.getElementById('csv-prefs-card').classList.add('hidden');
+      document.getElementById('csv-info-card').classList.add('hidden');
+      document.getElementById('csv-file').value = '';
+      document.getElementById('csv-chip-name').textContent = '';
+      document.getElementById('csv-chip-meta').textContent = '';
+      resetChat('csv-chat', 'Session cleared. Click + to upload a new CSV.');
+    }
+    // ── Suggestion chip click ─────────────────────────────────────────────────────
+    function csvSuggestionClick(btn) {
+      const q = btn.getAttribute('data-q');
+      if (!q) return;
+
+      // Remove the whole suggestions block so it doesn't clutter the chat
+      const block = document.getElementById('csv-suggestions');
+      if (block) block.remove();
+
+      // Fill the input and submit
+      const inp = document.getElementById('csv-input');
+      inp.value = q;
+      inp.style.height = 'auto';
+      inp.style.height = inp.scrollHeight + 'px';
+      sendCSVQuery();
+    }
+
+    // ── CSV save prefs ────────────────────────────────────────────────────────────
+    async function updatePrefs() {
+      if (!activeCsvId) return;
+      const save_charts = document.getElementById('pref-charts').checked;
+      const save_models = document.getElementById('pref-models').checked;
+      const save_history = document.getElementById('pref-history').checked;
+      await fetch('/csv-prefs', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ csv_id: activeCsvId, save_charts, save_models, save_history }),
+      });
+    }
+
+    // ── CSV query ─────────────────────────────────────────────────────────────────
+    async function sendCSVQuery() {
+      const inp = document.getElementById('csv-input');
+      const q = inp.value.trim(); if (!q) return;
+      if (!activeCsvId) { alert('Please upload a CSV first.'); return; }
+      inp.value = ''; inp.style.height = 'auto';
+      addUserBubble('csv-chat', q);
+      lockBtn('csv-send-btn');
+      await streamCSVQuery(q);
+      unlockBtn('csv-send-btn', 'Ask');
+    }
+
+    async function streamCSVQuery(question) {
+      const chat = document.getElementById('csv-chat');
+      const startTime = performance.now();
+
+      const wrap = document.createElement('div');
+      wrap.className = 'animate-fade-up space-y-3 max-w-3xl';
+      const bubble = document.createElement('div');
+      bubble.className = 'bg-white border border-rule rounded-xl shadow-card p-4';
+
+      // ── Thinking animation ────────────────────────────────────────────────────
+      const thinkingEl = makeThinkingEl([
+        'Reading your dataset…',
+        'Scanning the columns…',
+        'Crunching the numbers…',
+        'Spotting the patterns…',
+        'Running the analysis…',
+        'Checking the stats…',
+        'Finding the signal…',
+        'Putting it all together…',
+        'Polishing the insights…',
+        'Nearly done…',
+      ]);
+      bubble.appendChild(thinkingEl);
+
+      const ansDiv = document.createElement('div');
+      ansDiv.className = 'prose-answer text-sm text-ink leading-relaxed';
+      bubble.appendChild(ansDiv);
+      wrap.appendChild(bubble);
+      chat.appendChild(wrap);
+      scrollEnd(chat);
+
+      let fullText = '', metaData = null, firstToken = true;
+      try {
+        const res = await fetch('/query-csv-stream', {
+          method: 'POST',
+          headers: { ...authHdr(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ csv_id: activeCsvId, question }),
+        });
+        if (!res.ok) {
+          thinkingEl.destroy(); thinkingEl.remove();
+          ansDiv.innerHTML = `<span class="text-red-500">Error ${res.status}</span>`; return;
+        }
+        const reader = res.body.getReader(), decoder = new TextDecoder();
+        let buffer = '';
+        while (true) {
+          const { done, value } = await reader.read(); if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n\n'); buffer = lines.pop();
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const payload = line.slice(6).trim();
+            if (payload === '[DONE]') break;
+            try {
+              const chunk = JSON.parse(payload);
+              if (chunk.type === 'meta') {
+                metaData = chunk;
+              } else if (chunk.type === 'chart') {
+                metaData = metaData || {};
+                metaData.plotly_json = chunk.plotly_json;
+                metaData.has_chart = true;
+              } else if (chunk.type === 'token') {
+                if (firstToken) {
+                  firstToken = false;
+                  thinkingEl.destroy(); thinkingEl.remove(); // destroy on first token
+                }
+                fullText += chunk.text;
+                ansDiv.innerHTML = marked.parse(fullText);
+                const lastEl = ansDiv.lastElementChild || ansDiv;
+                lastEl.insertAdjacentHTML('beforeend', '<span class="stream-cursor"></span>');
+                scrollEnd(chat);
+              }
+            } catch (e) { if (e.message && !e.message.includes('token')) console.warn('SSE parse:', e.message.slice(0, 100)); }
+          }
+        }
+
+        // ── Always kill thinking after stream ends ──────────────────────────────
+        // Thinking is only destroyed on first token above. For chart-only responses
+        // (comparison chart, feature importance) no tokens arrive — thinking would
+        // stay visible forever without this guard.
+        if (firstToken) { thinkingEl.destroy?.(); thinkingEl.remove?.(); }
+
+        // ── Finalize answer text ────────────────────────────────────────────────
+        const hasChart = !!(metaData?.plotly_json || metaData?.has_chart);
+        const hasModel = !!(metaData?.has_model);
+        const hasArtifact = !!(metaData?.stat_artifact);
+        if (fullText) {
+          ansDiv.innerHTML = marked.parse(fullText);
+        }
+        // If chart/model/artifact exists but no NL text → ansDiv stays empty (visual speaks for itself)
+
+        const latencyMs = performance.now() - startTime;
+        // Only show latency badge when something meaningful was produced
+        if (fullText || hasChart || hasModel || hasArtifact) addLatencyBadge(bubble, latencyMs);
+
+        if (metaData) {
+          // Chart first — if there's no NL text, chart IS the response
+          if (metaData.plotly_json) {
+            const cd = document.createElement('div');
+            cd.className = 'bg-white border border-rule rounded-xl shadow-card overflow-hidden';
+            const plotDiv = document.createElement('div');
+            cd.appendChild(plotDiv);
+            wrap.insertBefore(cd, wrap.firstChild); // insert at TOP of wrap
+            scrollEnd(chat);
+            try {
+              const spec = JSON.parse(metaData.plotly_json);
+              spec.layout = spec.layout || {};
+              const isSplom = spec.data.some(function (t) { return t.type === 'splom'; });
+              const chartH = isSplom ? 680 : 440;
+              plotDiv.style.cssText = 'width:100%;height:' + (chartH + 20) + 'px;';
+              spec.layout.height = chartH;
+              spec.layout.width = undefined;
+              spec.layout.autosize = true;
+              spec.layout.paper_bgcolor = '#ffffff';
+              spec.layout.plot_bgcolor = '#faf9f7';
+              spec.layout.font = { family: 'DM Sans,sans-serif', size: 11 };
+              if (!isSplom) spec.layout.margin = spec.layout.margin || { t: 50, r: 20, b: 50, l: 60 };
+              // Decode Plotly binary format (bdata) to regular JS arrays
+              function decodeBdata(val) {
+                if (!val || typeof val !== 'object' || !val.bdata) return val;
+                const dtype = val.dtype || 'f8';
+                const raw = atob(val.bdata);
+                const buf = new ArrayBuffer(raw.length);
+                const bytes = new Uint8Array(buf);
+                for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+                const TypedArr = { f8: Float64Array, f4: Float32Array, i4: Int32Array, i2: Int16Array, i1: Int8Array, u4: Uint32Array, u2: Uint16Array, u1: Uint8Array }[dtype] || Float64Array;
+                return Array.from(new TypedArr(buf));
+              }
+              spec.data.forEach(function (trace) {
+                ['x', 'y', 'z', 'open', 'high', 'low', 'close', 'q1', 'median', 'q3', 'lowerfence', 'upperfence', 'mean', 'r', 'theta', 'values', 'labels', 'text', 'customdata'].forEach(function (k) {
+                  if (trace[k] && trace[k].bdata) trace[k] = decodeBdata(trace[k]);
+                });
+                if (trace.type === 'splom' && Array.isArray(trace.dimensions)) {
+                  trace.dimensions.forEach(function (dim) { if (dim.values && dim.values.bdata) dim.values = decodeBdata(dim.values); });
+                }
+                if ((trace.type === 'surface' || trace.type === 'heatmap' || trace.type === 'heatmapgl') && Array.isArray(trace.z)) {
+                  trace.z = trace.z.map(function (row) { return (row && row.bdata) ? decodeBdata(row) : row; });
+                }
+                if (trace.marker && trace.marker.color && trace.marker.color.bdata) trace.marker.color = decodeBdata(trace.marker.color);
+                if (trace.marker && trace.marker.size && trace.marker.size.bdata) trace.marker.size = decodeBdata(trace.marker.size);
+              });
+              Plotly.newPlot(plotDiv, spec.data, spec.layout, { responsive: true, displayModeBar: false });
+            } catch (e) {
+              plotDiv.innerHTML = '<p class="text-red-500 p-4">Chart error: ' + e.message + '</p>';
+              console.error('Chart error:', e);
+            }
+          }
+          if (metaData.stat_artifact) renderStatArtifact(wrap, metaData.stat_artifact);
+          if (metaData.raw_output && metaData.is_filter && !metaData.has_chart && !metaData.has_model) {
+            const pre = document.createElement('div');
+            pre.className = 'bg-white border border-rule rounded-xl shadow-card overflow-hidden';
+            pre.innerHTML = '<div class="px-4 py-2.5 border-b border-rule bg-cream"><span class="text-xs tracking-widest uppercase text-faint font-medium">Filtered Results</span></div>'
+              + '<pre class="text-xs font-mono text-ink p-4 overflow-x-auto whitespace-pre">' + escH(metaData.raw_output) + '</pre>';
+            wrap.appendChild(pre);
+          }
+          if (metaData.has_export && metaData.export_path) {
+            // Extract just the filename from the full path (cross-platform)
+            const rawFile = metaData.export_path.replace(/\\/g, '/').split('/').pop() || 'export.csv';
+            // Build a friendly display name: strip the csv_id hash and timestamp, keep the label
+            // e.g. "abc123_filtered_20250522_143000.csv" → "Filtered dataset"
+            const friendlyLabel = rawFile
+              .replace(/^[a-f0-9]{8,}_/, '')          // strip leading csv_id hash
+              .replace(/_\d{8}_\d{6}\.csv$/, '')       // strip timestamp + .csv
+              .replace(/_/g, ' ')                       // underscores → spaces
+              .replace(/\b\w/g, c => c.toUpperCase())  // title-case
+              || 'Dataset';
+            const ed = document.createElement('div');
+            ed.className = 'bg-white border border-blue-200 rounded-xl shadow-card p-4 flex items-center gap-4';
+            ed.innerHTML = '<div class="flex-1 min-w-0">'
+              + '<p class="text-xs tracking-widest uppercase text-accent font-medium mb-0.5">Export Ready</p>'
+              + '<p class="text-sm font-medium text-ink truncate" title="' + escH(rawFile) + '">' + escH(friendlyLabel) + '</p>'
+              + '</div>'
+              + '<a href="/download-csv/' + activeCsvId + '?file=' + encodeURIComponent(rawFile) + '" download="' + escH(rawFile) + '" class="shrink-0 px-4 py-2 bg-accent text-white text-xs rounded-lg font-medium hover:bg-blue-800 transition-colors whitespace-nowrap">↓ Download CSV</a>';
+            wrap.appendChild(ed);
+          }
+          if (metaData.has_model && metaData.model_path) {
+            const mn = (metaData.model_path.split('/').pop() || '').replace('.pkl', '').replace(/_/g, ' ');
+            const md = document.createElement('div');
+            md.className = 'bg-white border border-green-200 rounded-xl shadow-card p-4 flex items-center justify-between';
+            md.innerHTML = '<div><p class="text-xs tracking-widest uppercase text-green-700 font-medium mb-0.5">Model Trained</p><p class="text-sm font-medium text-ink capitalize">' + escH(mn) + '</p></div>'
+              + '<a href="/download-model/' + activeCsvId + '" download class="px-4 py-2 bg-green-600 text-white text-xs rounded-lg font-medium hover:bg-green-700">↓ Download .pkl</a>';
+            wrap.appendChild(md);
+          }
+        }
+        scrollEnd(chat);
+      } catch (e) {
+        thinkingEl.destroy?.(); thinkingEl.remove?.();
+        ansDiv.innerHTML = `<span class="text-red-500">Stream error: ${escH(e.message)}</span>`;
+      }
+    }
+
+
+    function renderCSVAnswer(chatId, data) {
+      const chat = document.getElementById(chatId);
+      const wrap = document.createElement('div'); wrap.className = 'animate-fade-up space-y-3 max-w-3xl';
+
+      // NL answer
+      if (data.answer) {
+        const d = document.createElement('div'); d.className = 'bg-white border border-rule rounded-xl shadow-card p-4';
+        d.innerHTML = `<div class="prose-answer text-sm text-ink leading-relaxed">${marked.parse(data.answer)}</div>`;
+        wrap.appendChild(d);
+      }
+
+      // Stat artifact (overview/analysis)
+      if (data.stat_artifact) renderStatArtifact(wrap, data.stat_artifact);
+
+      // Filter result table — only show for actual filter queries, not analysis/model output
+      if (data.raw_output && data.is_filter && !data.has_chart && !data.has_model) {
+        const d = document.createElement('div');
+        d.className = 'bg-white border border-rule rounded-xl shadow-card overflow-hidden';
+        d.innerHTML = `<div class="px-4 py-2.5 border-b border-rule bg-cream flex items-center gap-2">
+      <span class="text-xs tracking-widest uppercase text-faint font-medium">Filtered Results</span>
+    </div>
+    <pre class="text-xs font-mono text-ink p-4 overflow-x-auto whitespace-pre">${escH(data.raw_output)}</pre>`;
+        wrap.appendChild(d);
+      }
+
+      // Export download
+      if (data.has_export && data.export_path) {
+        const rawFile2 = data.export_path.replace(/\\/g, '/').split('/').pop() || 'export.csv';
+        const friendlyLabel2 = rawFile2
+          .replace(/^[a-f0-9]{8,}_/, '')
+          .replace(/_\d{8}_\d{6}\.csv$/, '')
+          .replace(/_/g, ' ')
+          .replace(/\b\w/g, c => c.toUpperCase()) || 'Dataset';
+        const d = document.createElement('div');
+        d.className = 'bg-white border border-blue-200 rounded-xl shadow-card p-4 flex items-center gap-4';
+        d.innerHTML = '<div class="flex-1 min-w-0">'
+          + '<p class="text-xs tracking-widest uppercase text-accent font-medium mb-0.5">Export Ready</p>'
+          + '<p class="text-sm font-medium text-ink truncate" title="' + escH(rawFile2) + '">' + escH(friendlyLabel2) + '</p>'
+          + '</div>'
+          + '<a href="/download-csv/' + activeCsvId + '?file=' + encodeURIComponent(rawFile2) + '" download="' + escH(rawFile2) + '" class="shrink-0 px-4 py-2 bg-accent text-white text-xs rounded-lg font-medium hover:bg-blue-800 transition-colors whitespace-nowrap">↓ Download CSV</a>';
+        wrap.appendChild(d);
+      }
+
+      // Model trained
+      if (data.has_model && data.model_path) {
+        const mn = (data.model_path.split('/').pop() || 'model').replace('.pkl', '').replace(/_/g, ' ');
+        const d = document.createElement('div'); d.className = 'bg-white border border-green-200 rounded-xl shadow-card p-4 flex items-center justify-between';
+        d.innerHTML = `<div><p class="text-xs tracking-widest uppercase text-green-700 font-medium mb-0.5">Model Trained</p><p class="text-sm font-medium text-ink capitalize">${escH(mn)}</p></div>
+      <a href="/download-model/${activeCsvId}" download class="px-4 py-2 bg-green-600 text-white text-xs rounded-lg font-medium hover:bg-green-700 transition-colors">↓ Download .pkl</a>`;
+        wrap.appendChild(d);
+      }
+
+      if (data.plotly_json) {
+        const cid = 'chart-' + (++chartCount);
+        const d = document.createElement('div'); d.className = 'bg-white border border-rule rounded-xl shadow-card p-4';
+        d.innerHTML = `<div id="${cid}" style="min-height:460px"></div>`;
+        wrap.appendChild(d); chat.appendChild(wrap); scrollEnd(chat);
+        try {
+          const spec = JSON.parse(data.plotly_json);
+          const base = spec.layout || {};
+
+          // Detect chart type — heatmap/image traces must NOT have axis overrides
+          const traceTypes = (spec.data || []).map(t => t.type || '');
+          const isHeatmap = traceTypes.some(t => ['heatmap', 'image'].includes(t));
+          const isBar = traceTypes.some(t => t === 'bar');
+
+          spec.layout = {
+            ...base,
+            font: { family: 'DM Sans, sans-serif', size: 12, color: '#1a1a1a' },
+            paper_bgcolor: '#ffffff',
+            plot_bgcolor: isHeatmap ? '#ffffff' : '#faf9f7',
+            margin: { t: 60, r: 30, b: 60, l: isHeatmap ? 120 : 70 },
+            height: isHeatmap ? 520 : 460,
+            colorway: ['#2c5f8a', '#b8953a', '#27ae60', '#c0392b', '#8e44ad', '#16a085'],
+            // Only apply axis overrides for non-heatmap charts
+            ...(isHeatmap ? {} : {
+              xaxis: { automargin: true, tickangle: -30, ...(base.xaxis || {}) },
+              yaxis: { automargin: true, ...(base.yaxis || {}) },
+            }),
+          };
+
+          // Ensure bars have visible color
+          spec.data = (spec.data || []).map(trace => {
+            if (trace.type === 'bar') {
+              return { ...trace, marker: { ...(trace.marker || {}), color: trace.marker?.color || '#2c5f8a' } };
+            }
+            return trace;
+          });
+          Plotly.newPlot(cid, spec.data, spec.layout, { responsive: true, displayModeBar: false });
+        } catch (e) {
+          console.error('Plotly error:', e, data.plotly_json?.slice(0, 200));
+          document.getElementById(cid).innerHTML = `<p class="text-xs text-red-400 p-3">Chart error: ${escH(e.message)}</p>`;
+        }
+        return;
+      }
+      chat.appendChild(wrap); scrollEnd(chat);
+    }
+
+    function renderStatArtifact(container, artifact) {
+      const { shape, numeric, categorical, null_total, duplicates, correlation } = artifact;
+      const wrapper = document.createElement('div'); wrapper.className = 'space-y-3';
+
+      // Overview chips
+      const chips = document.createElement('div'); chips.className = 'grid grid-cols-4 gap-2';
+      chips.innerHTML = [['Rows', shape.rows.toLocaleString(), '📋'], ['Columns', shape.cols, '🗂'],
+      ['Nulls', null_total, null_total > 0 ? '⚠️' : '✓'], ['Dupes', duplicates, duplicates > 0 ? '⚠️' : '✓']
+      ].map(([l, v, i]) => `
+    <div class="bg-white border border-rule rounded-xl shadow-card p-3 text-center">
+      <div class="text-lg mb-0.5">${i}</div>
+      <div class="font-mono text-sm font-medium text-ink">${v}</div>
+      <div class="text-xs text-faint mt-0.5">${l}</div>
+    </div>`).join('');
+      wrapper.appendChild(chips);
+
+      // Numeric table
+      if (Object.keys(numeric).length) {
+        const d = document.createElement('div'); d.className = 'bg-white border border-rule rounded-xl shadow-card overflow-hidden';
+        d.innerHTML = `<div class="px-4 py-2.5 border-b border-rule bg-cream"><p class="text-xs tracking-widest uppercase text-faint font-medium">Numeric Columns</p></div>
+      <div class="overflow-x-auto"><table class="w-full text-xs">
+        <thead><tr class="border-b border-rule bg-cream">${['Column', 'Mean', 'Std', 'Min', 'Median', 'Max', 'Nulls'].map(h => `<th class="px-4 py-2.5 text-left text-muted font-medium">${h}</th>`).join('')}</tr></thead>
+        <tbody>${Object.entries(numeric).map(([col, s]) => `<tr class="border-b border-rule last:border-0 hover:bg-cream transition-colors">
+          <td class="px-4 py-2 font-mono text-ink font-medium">${escH(col)}</td>
+          <td class="px-4 py-2 font-mono text-muted">${s.mean}</td><td class="px-4 py-2 font-mono text-muted">${s.std}</td>
+          <td class="px-4 py-2 font-mono text-muted">${s.min}</td><td class="px-4 py-2 font-mono text-ink font-medium">${s.median}</td>
+          <td class="px-4 py-2 font-mono text-muted">${s.max}</td>
+          <td class="px-4 py-2 font-mono ${s.nulls > 0 ? 'text-amber-600' : 'text-green-600'}">${s.nulls}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+        wrapper.appendChild(d);
+      }
+
+      // Categorical table
+      if (Object.keys(categorical).length) {
+        const d = document.createElement('div'); d.className = 'bg-white border border-rule rounded-xl shadow-card overflow-hidden';
+        d.innerHTML = `<div class="px-4 py-2.5 border-b border-rule bg-cream"><p class="text-xs tracking-widest uppercase text-faint font-medium">Categorical Columns</p></div>
+      <div class="overflow-x-auto"><table class="w-full text-xs">
+        <thead><tr class="border-b border-rule bg-cream">${['Column', 'Unique', 'Top Value', 'Top Count', 'Nulls'].map(h => `<th class="px-4 py-2.5 text-left text-muted font-medium">${h}</th>`).join('')}</tr></thead>
+        <tbody>${Object.entries(categorical).map(([col, s]) => `<tr class="border-b border-rule last:border-0 hover:bg-cream transition-colors">
+          <td class="px-4 py-2 font-mono text-ink font-medium">${escH(col)}</td>
+          <td class="px-4 py-2 font-mono text-muted">${s.unique}</td>
+          <td class="px-4 py-2 font-mono text-ink truncate" style="max-width:160px">${escH(String(s.top))}</td>
+          <td class="px-4 py-2 font-mono text-muted">${s.top_count}</td>
+          <td class="px-4 py-2 font-mono ${s.nulls > 0 ? 'text-amber-600' : 'text-green-600'}">${s.nulls}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+        wrapper.appendChild(d);
+      }
+
+      // Correlation section — full color-coded matrix
+      if (correlation && correlation.top_pairs && correlation.top_pairs.length > 0) {
+        const corrDiv = document.createElement('div');
+        corrDiv.className = 'bg-white border border-rule rounded-xl shadow-card overflow-hidden';
+
+        // Header
+        let html = '<div class="px-4 py-2.5 border-b border-rule bg-cream flex items-center justify-between">';
+        html += '<p class="text-xs tracking-widest uppercase text-faint font-medium">Correlation Analysis</p>';
+        const warns = [];
+        if (correlation.multicollinear && correlation.multicollinear.length)
+          warns.push('<span class="text-amber-600">⚠ ' + correlation.multicollinear.length + ' multicollinear</span>');
+        html += '<div class="flex gap-2 text-xs">' + warns.join(' · ') + '</div></div>';
+
+        // Top pairs table
+        html += '<div class="overflow-x-auto"><table class="w-full text-xs">';
+        html += '<thead><tr class="border-b border-rule bg-cream">';
+        ['Column A', 'Column B', 'r', 'Strength'].forEach(h => { html += '<th class="px-4 py-2 text-left text-muted font-medium">' + h + '</th>'; });
+        html += '</tr></thead><tbody>';
+        correlation.top_pairs.slice(0, 8).forEach(function (p) {
+          const absR = p.abs_r !== undefined ? p.abs_r : Math.abs(p.r);
+          const rCol = p.r > 0 ? 'text-blue-600' : 'text-red-500';
+          html += '<tr class="border-b border-rule last:border-0 hover:bg-cream">';
+          html += '<td class="px-4 py-2 font-mono text-ink">' + escH(p.col1) + '</td>';
+          html += '<td class="px-4 py-2 font-mono text-ink">' + escH(p.col2) + '</td>';
+          html += '<td class="px-4 py-2 font-mono font-bold ' + rCol + '">' + p.r + '</td>';
+          html += '<td class="px-4 py-2 text-muted">' + escH(p.strength) + (absR >= 0.5 ? ' ⚡' : '') + '</td>';
+          html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+
+        // Full color-coded matrix
+        const matrix = correlation.matrix || {};
+        const cols = correlation.num_cols || [];
+        if (cols.length > 1) {
+          html += '<div class="border-t border-rule px-4 py-3">';
+          html += '<p class="text-xs tracking-widest uppercase text-faint font-medium mb-2">Full Matrix</p>';
+          html += '<div class="overflow-x-auto"><table class="text-xs border-collapse w-full">';
+          // Header row
+          html += '<thead><tr><th class="border border-rule p-1.5 bg-cream text-faint text-xs"></th>';
+          cols.forEach(function (c) {
+            html += '<th class="border border-rule p-1.5 bg-cream text-muted font-medium text-center" style="min-width:54px">' + escH(c) + '</th>';
+          });
+          html += '</tr></thead><tbody>';
+          // Data rows
+          cols.forEach(function (row) {
+            html += '<tr><td class="border border-rule p-1.5 bg-cream text-muted font-medium text-xs whitespace-nowrap">' + escH(row) + '</td>';
+            cols.forEach(function (col) {
+              const v = matrix[row] && matrix[row][col] !== undefined ? matrix[row][col] : null;
+              if (v === null) {
+                html += '<td class="border border-rule p-1.5 text-center text-faint">—</td>';
+              } else {
+                const a = Math.abs(v);
+                let bg = 'transparent';
+                if (v > 0.1) bg = 'rgba(44,95,138,' + (a * 0.75) + ')';
+                if (v < -0.1) bg = 'rgba(192,57,43,' + (a * 0.75) + ')';
+                const fg = a > 0.35 ? '#ffffff' : '#1a1a1a';
+                const bold = a >= 0.5 ? 'font-bold' : '';
+                html += '<td class="border border-rule p-1.5 text-center font-mono ' + bold + '" style="background:' + bg + ';color:' + fg + '">' + v.toFixed(2) + '</td>';
+              }
+            });
+            html += '</tr>';
+          });
+          html += '</tbody></table></div></div>';
+        }
+
+        // Target predictors
+        if (correlation.target_corr && correlation.target_corr.length) {
+          html += '<div class="px-4 py-2.5 border-t border-rule bg-cream">';
+          html += '<p class="text-xs text-muted font-medium mb-1.5">Top predictors:</p>';
+          html += '<div class="flex flex-wrap gap-1.5">';
+          correlation.target_corr.slice(0, 6).forEach(function (c) {
+            const clr = c.r > 0 ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-red-50 text-red-700 border-red-200';
+            html += '<span class="px-2 py-0.5 rounded border text-xs font-mono ' + clr + '">' + escH(c.col) + ': ' + c.r + '</span>';
+          });
+          html += '</div></div>';
+        }
+
+        corrDiv.innerHTML = html;
+        wrapper.appendChild(corrDiv);
+      }
+
+      container.appendChild(wrapper);
+    }
+
+    // ── Thinking timeline — sequential steps inside the chat bubble ─────────────
+    // Each phase appears as a new dot+line+text row, stacking up as time passes.
+    // The active dot pulses; completed dots shrink and fade.
+    // Call el.destroy() to stop RAF + all timers, then el.remove().
+    function makeThinkingEl(phases) {
+      const CORAL = 'rgb(208,100,75)';
+      const CORAL_DONE = 'rgba(208,100,75,0.35)';
+      const delays = [1800, 2300, 1600, 2400, 1900, 2100, 1700, 2200, 1500, 2000];
+
+      // ── Wrapper ────────────────────────────────────────────────────────────
+      const div = document.createElement('div');
+      div.className = 'py-1';
+
+      // ── Header row: small spinning asterisk + "Thinking…" label ───────────
+      const header = document.createElement('div');
+      header.className = 'flex items-center gap-2 mb-2';
+
+      const S = 18, dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const canvas = document.createElement('canvas');
+      canvas.width = S * dpr; canvas.height = S * dpr;
+      canvas.style.cssText = `width:${S}px;height:${S}px;flex-shrink:0;`;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      const cx = S / 2, cy = S / 2;
+      let t = 0, rafId;
+      function draw() {
+        ctx.clearRect(0, 0, S, S);
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(t * 0.28);
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          const w = (Math.sin(t * 3.0 - a * 1.5) + 1) / 2;
+          const len = 2.5 + 5.5 * w;
+          ctx.save(); ctx.rotate(a);
+          ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -len);
+          ctx.strokeStyle = `rgba(208,100,75,${(0.4 + 0.6 * w).toFixed(2)})`;
+          ctx.lineWidth = 1.6; ctx.lineCap = 'round'; ctx.stroke();
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+      function loop() { t += 0.022; draw(); rafId = requestAnimationFrame(loop); }
+      loop();
+
+      const label = document.createElement('span');
+      label.style.cssText = 'font-size:11px;font-weight:600;color:#b0aca6;letter-spacing:0.03em;';
+      label.textContent = 'Thinking…';
+      header.appendChild(canvas);
+      header.appendChild(label);
+      div.appendChild(header);
+
+      // ── Timeline container ─────────────────────────────────────────────────
+      const timeline = document.createElement('div');
+      timeline.style.cssText = 'padding-left:2px;';
+      div.appendChild(timeline);
+
+      const stepEls = [];   // { row, dot, line }
+      const stepTimers = [];
+
+      function addStep(idx) {
+        const isLast = (idx === phases.length - 1);
+
+        const row = document.createElement('div');
+        row.className = 'think-step flex items-start gap-2';
+        row.style.cssText = 'margin-bottom:' + (isLast ? '0' : '0') + 'px;';
+
+        // ── Left column: dot + connector line ──────────────────────────────
+        const col = document.createElement('div');
+        col.style.cssText = 'display:flex;flex-direction:column;align-items:center;width:14px;padding-top:2px;flex-shrink:0;';
+
+        const dot = document.createElement('div');
+        dot.style.cssText = `width:8px;height:8px;border-radius:50%;background:${CORAL};flex-shrink:0;animation:dot-pulse 1.2s ease-in-out infinite;`;
+        col.appendChild(dot);
+
+        // connector line to next step (hidden on last)
+        const line = document.createElement('div');
+        line.style.cssText = `width:1.5px;flex:1;min-height:18px;background:rgba(208,100,75,0.2);margin-top:3px;${isLast ? 'display:none;' : ''}`;
+        col.appendChild(line);
+
+        // ── Step text ───────────────────────────────────────────────────────
+        const txt = document.createElement('span');
+        txt.style.cssText = 'font-size:12px;color:#6b6b6b;line-height:1.5;padding-top:0px;';
+        txt.textContent = phases[idx];
+
+        row.appendChild(col);
+        row.appendChild(txt);
+        timeline.appendChild(row);
+        stepEls.push({ row, dot, line });
+      }
+
+      function markDone(idx) {
+        if (!stepEls[idx]) return;
+        const { dot } = stepEls[idx];
+        dot.style.animation = 'none';
+        dot.style.background = CORAL_DONE;
+        dot.style.width = '6px';
+        dot.style.height = '6px';
+      }
+
+      // Show first step immediately
+      addStep(0);
+
+      // Schedule remaining steps
+      let cumDelay = 0;
+      for (let i = 1; i < phases.length; i++) {
+        cumDelay += delays[(i - 1) % delays.length];
+        const capturedI = i;
+        const capturedDelay = cumDelay;
+        stepTimers.push(setTimeout(() => {
+          markDone(capturedI - 1);
+          addStep(capturedI);
+        }, capturedDelay));
+      }
+
+      div.destroy = () => {
+        cancelAnimationFrame(rafId);
+        stepTimers.forEach(clearTimeout);
+      };
+      return div;
+    }
+
+    // ── Latency badge ─────────────────────────────────────────────────────────────
+    function addLatencyBadge(bubble, ms) {
+      const badge = document.createElement('div');
+      badge.className = 'mt-2 latency-badge';
+      badge.innerHTML =
+        `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">` +
+        `<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>` +
+        `${(ms / 1000).toFixed(1)}s`;
+      bubble.appendChild(badge);
+    }
+
+    // ── Feedback bar ─────────────────────────────────────────────────────────────
+    function addFeedbackBar(bubble, pdfId, question, answer) {
+      const bar = document.createElement('div');
+      bar.className = 'mt-3 pt-2 border-t border-rule flex items-center gap-2';
+      bar.innerHTML =
+        '<span class="text-xs text-faint flex-1">Was this helpful?</span>' +
+        '<button class="fb-btn up" title="Good answer">&#128077;</button>' +
+        '<button class="fb-btn down" title="Not helpful">&#128078;</button>';
+      const [upBtn, downBtn] = bar.querySelectorAll('.fb-btn');
+      function sendRating(rating) {
+        upBtn.disabled = true; downBtn.disabled = true;
+        upBtn.classList.remove('active-up'); downBtn.classList.remove('active-down');
+        if (rating === 1) upBtn.classList.add('active-up');
+        else downBtn.classList.add('active-down');
+        // Replace text with confirmation
+        bar.querySelector('span').textContent = rating === 1 ? 'Thanks!' : 'Thanks — noted.';
+        fetch('/feedback', {
+          method: 'POST',
+          headers: { ...authHdr(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pdf_id: pdfId, question: question, answer: answer, rating: rating }),
+        }).catch(function () { });
+      }
+      upBtn.addEventListener('click', function () { sendRating(1); });
+      downBtn.addEventListener('click', function () { sendRating(-1); });
+      bubble.appendChild(bar);
+    }
+
+    // ── Chat helpers ──────────────────────────────────────────────────────────────
+    function addUserBubble(chatId, text) {
+      const chat = document.getElementById(chatId);
+      if (chat.querySelector('.font-display')) chat.innerHTML = '';
+      const el = document.createElement('div'); el.className = 'animate-fade-up flex justify-end';
+      el.innerHTML = `<div class="bg-accent text-white rounded-xl px-4 py-2.5 text-sm max-w-lg leading-relaxed shadow-card">${escH(text)}</div>`;
+      chat.appendChild(el); scrollEnd(chat);
+    }
+    function addThinking(chatId) {
+      const chat = document.getElementById(chatId);
+      const el = document.createElement('div'); el.className = 'animate-fade-in flex items-center gap-2 text-xs text-faint py-1';
+      el.innerHTML = `${spinner()}<span>Thinking…</span>`;
+      chat.appendChild(el); scrollEnd(chat); return el;
+    }
+    function addErrBubble(chatId, msg) {
+      const chat = document.getElementById(chatId);
+      const el = document.createElement('div'); el.className = 'animate-fade-up';
+      el.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-xs text-red-600 max-w-lg">✕ ${escH(msg)}</div>`;
+      chat.appendChild(el); scrollEnd(chat);
+    }
+    function resetChat(chatId, msg) {
+      document.getElementById(chatId).innerHTML = `
+    <div class="animate-fade-in">
+      <div class="bg-accent-lt border border-blue-200 rounded-xl px-4 py-3 text-sm text-accent max-w-lg">${msg}</div>
+    </div>`;
+    }
+    function scrollEnd(el) { setTimeout(() => { el.scrollTop = el.scrollHeight }, 60); }
+    function setStatus(el, type, html) {
+      el.classList.remove('hidden');
+      el.className = `mt-3 text-xs leading-relaxed ${type === 'err' ? 'text-red-500' : type === 'ok' ? 'text-green-700' : 'text-accent'}`;
+      el.innerHTML = html;
+    }
+    function lockBtn(id) { const b = document.getElementById(id); b.disabled = true; b.classList.add('opacity-40'); }
+    function unlockBtn(id, label) { const b = document.getElementById(id); b.disabled = false; b.classList.remove('opacity-40'); b.textContent = label; }
+    function autoResize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+    function spinner() {
+      return `<svg class="inline animate-spin-slow w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="60" stroke-dashoffset="20"/></svg>`;
+    }
+    function escH(s) {
+      return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+  </script>
+</body>
+
+</html>
