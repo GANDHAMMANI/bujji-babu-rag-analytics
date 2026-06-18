@@ -37,7 +37,7 @@ Both engines share one auth layer, one SQLite store, and one streaming SSE inter
 ### PDF RAG — relevant image surfaced from document
 > Add your screenshot here — `docs/screenshots/pdf_rag_image.png`
 
-![PDF RAG image relevance](docs/screenshots/pdf_rag_image.png)
+![PDF RAG image relevance](docs/screenshots/pdf_rag_image.jpeg)
 
 ---
 
