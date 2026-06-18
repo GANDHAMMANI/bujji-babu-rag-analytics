@@ -44,16 +44,11 @@ Both engines share one auth layer, one SQLite store, and one streaming SSE inter
 ### CSV Analytics — live chart rendering
 > Add your screenshot here — `docs/screenshots/csv_chart.png`
 
-![CSV chart rendering](docs/screenshots/csv_chart.png)
+![CSV chart rendering](docs/screenshots/csv_chart.jpeg)
 
 ---
 
-### CSV Analytics — ML model comparison
-> Add your screenshot here — `docs/screenshots/csv_model_comparison.png`
 
-![ML model comparison chart](docs/screenshots/csv_model_comparison.png)
-
----
 
 ## Why there is a login
 
