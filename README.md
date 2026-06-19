@@ -1,7 +1,7 @@
 # Bujji Babu — AI RAG Platform
 
-> PDF intelligence + CSV analytics on a single, production-grade backend.  
-> Ask questions about documents. Visualize and model your data. Export everything.
+> **Upload. Ask. Analyze. Decide. From Raw Files to Real Insights.**  
+> Extract intelligence from PDFs, explore CSVs with AI, generate visualizations, build predictive models, and export results—all in seconds.
 
 ---
 
